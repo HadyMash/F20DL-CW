@@ -91,6 +91,25 @@ sns.heatmap(df1.isnull(), cbar=True, yticklabels=False, cmap='viridis')
 plt.title('Missing Data Heatmap')
 plt.show()
 
+# %% [markdown]
+# Correlation
+
+# %%
+# Select only numeric columns and calculate correlation with price
+numeric_cols = df1.select_dtypes(include=['int64', 'float64']).columns
+correlation_with_price = remove_outliers(df1, numeric_cols)[numeric_cols].corr()['price'].sort_values(ascending=False)
+
+print("Correlation with price:")
+print(correlation_with_price)
+
+# Visualize correlation with price
+plt.figure(figsize=(10, 8))
+correlation_with_price.drop('price').plot(kind='barh')
+plt.title('Correlation of Numeric Features with Price')
+plt.xlabel('Correlation Coefficient')
+plt.tight_layout()
+plt.show()
+
 
 # %% [markdown]
 # # HouseTS Multimodal Dataset
@@ -125,6 +144,39 @@ df2.describe()
 print("Total number of distinct zipcodes:", df2['zipcode'].nunique())
 print("\nCount of properties per zipcode:")
 print(df2['zipcode'].value_counts())
+
+# %% [markdown]
+# Correlation
+
+# %%
+# Select only numeric columns and calculate correlation with price
+numeric_cols = df2.select_dtypes(include=['int64', 'float64']).columns
+correlation_with_price = remove_outliers(df2, numeric_cols)[numeric_cols].corr()['median_sale_price'].sort_values(ascending=False)
+
+print("Correlation with price:")
+print(correlation_with_price)
+
+# Visualize correlation with price
+plt.figure(figsize=(10, 8))
+correlation_with_price.drop('price').plot(kind='barh')
+plt.title('Correlation of Numeric Features with Price')
+plt.xlabel('Correlation Coefficient')
+plt.tight_layout()
+plt.show()
+
+# %%
+# Check for null values in all columns
+print("Null values in each column:")
+print(df2.isnull().sum())
+
+print("\nPercentage of null values:")
+print((df2.isnull().sum() / len(df2)) * 100)
+
+# Visualize missing data
+plt.figure(figsize=(10, 6))
+sns.heatmap(df2.isnull(), cbar=True, yticklabels=False, cmap='viridis')
+plt.title('Missing Data Heatmap')
+plt.show()
 
 # %% [markdown]
 # # Merging datasets
@@ -165,6 +217,62 @@ plt.figure(figsize=(10, 6))
 sns.heatmap(df1f.isnull(), cbar=True, yticklabels=False, cmap='viridis')
 plt.title('Missing Data Heatmap')
 plt.show()
+
 # %% [markdown]
+# Remove null data
+
+# %%
+df1f = df1f.dropna()
+
+# %% [markdown]
+# Correlation
+
+# %%
+# Select only numeric columns and calculate correlation with price
+numeric_cols = df1f.select_dtypes(include=['int64', 'float64']).columns
+correlation_with_price = remove_outliers(df1f, numeric_cols)[numeric_cols].corr()['price'].sort_values(ascending=False)
+
+print("Correlation with price:")
+print(correlation_with_price)
+
+# Visualize correlation with price
+plt.figure(figsize=(10, 8))
+correlation_with_price.drop('price').plot(kind='barh')
+plt.title('Correlation of Numeric Features with Price')
+plt.xlabel('Correlation Coefficient')
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# Plot scatter plots of price vs other factors
+# %%
+# scatter plot of numeric variables vs price 
+fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+axes = axes.flatten()
+
+# Get numeric columns excluding price
+numeric_cols = df1f.select_dtypes(include=['int64', 'float64']).columns
+numeric_cols = [col for col in numeric_cols if col != 'price']
+
+# remove outliers
+df1fno = remove_outliers(df1f, numeric_cols)
+
+# Create scatter plots for first 6 numeric variables
+for i, col in enumerate(numeric_cols):
+    if i < len(axes):
+        axes[i].scatter(df1fno[col], df1fno['price'], alpha=0.6)
+        axes[i].set_xlabel(col)
+        axes[i].set_ylabel('Price')
+        axes[i].set_title(f'Price vs {col}')
+        axes[i].grid(True, alpha=0.3)
+
+# Hide empty subplots
+for i in range(len(numeric_cols), len(axes)):
+    axes[i].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+# %% [markdown]
+#
 #
 #
