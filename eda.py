@@ -178,13 +178,46 @@ sns.heatmap(df2.isnull(), cbar=True, yticklabels=False, cmap='viridis')
 plt.title('Missing Data Heatmap')
 plt.show()
 
+# %%
+# scatter plot of numeric variables vs price 
+# Get numeric columns excluding median_sale_price
+numeric_cols = df2.select_dtypes(include=['int64', 'float64']).columns
+numeric_cols = [col for col in numeric_cols if col != 'median_sale_price']
+
+print(numeric_cols)
+
+# remove outliers
+df2fno = remove_outliers(df2, numeric_cols)
+
+# Calculate number of rows and columns needed
+n_cols = len(numeric_cols)
+n_rows = (n_cols + 4) // 5  # Calculate rows needed for 5 columns
+
+fig, axes = plt.subplots(n_rows, 5, figsize=(25, 5*n_rows))
+axes = axes.flatten() if n_rows > 1 else [axes] if n_rows == 1 else []
+
+# Create scatter plots for all numeric variables
+for i, col in enumerate(numeric_cols):
+    axes[i].scatter(df2fno[col], df2fno['median_sale_price'], alpha=0.1)
+    axes[i].set_xlabel(col)
+    axes[i].set_ylabel('median_sale_price')
+    axes[i].set_title(f'median_sale_price vs {col}')
+    axes[i].grid(True, alpha=0.1)
+
+# Hide empty subplots
+for i in range(len(numeric_cols), len(axes)):
+    axes[i].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+
 # %% [markdown]
 # # Merging datasets
 #
 # Reduce df1 to only listings in df2's zipcodes
 # %%
 # df1 filtered
-df1f = df1[df1['zip_code'].isin(df2['zipcode'])]
+df1f = df1[(df1['zip_code'].isin(df2['zipcode']))]
 df1f.head()
 
 # %%
@@ -201,7 +234,7 @@ df1f.describe()
 numeric_cols = df1f.select_dtypes(include=['int64', 'float64']).columns
 df1f_no_outliers = remove_outliers(df1f, numeric_cols)
 
-df1f_no_outliers.hist(bins=50, figsize=(20,15))
+df1f_no_outliers.hist(bins=50, figsize=(15,15))
 plt.show()
 
 # %%
@@ -223,6 +256,7 @@ plt.show()
 
 # %%
 df1f = df1f.dropna()
+df1f.info()
 
 # %% [markdown]
 # Correlation
@@ -236,7 +270,7 @@ print("Correlation with price:")
 print(correlation_with_price)
 
 # Visualize correlation with price
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(7, 8))
 correlation_with_price.drop('price').plot(kind='barh')
 plt.title('Correlation of Numeric Features with Price')
 plt.xlabel('Correlation Coefficient')
@@ -247,9 +281,6 @@ plt.show()
 # Plot scatter plots of price vs other factors
 # %%
 # scatter plot of numeric variables vs price 
-fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-axes = axes.flatten()
-
 # Get numeric columns excluding price
 numeric_cols = df1f.select_dtypes(include=['int64', 'float64']).columns
 numeric_cols = [col for col in numeric_cols if col != 'price']
@@ -257,14 +288,20 @@ numeric_cols = [col for col in numeric_cols if col != 'price']
 # remove outliers
 df1fno = remove_outliers(df1f, numeric_cols)
 
-# Create scatter plots for first 6 numeric variables
+# Calculate number of rows and columns needed
+n_cols = len(numeric_cols)
+n_rows = (n_cols + 2) // 3  # Calculate rows needed for 3 columns
+
+fig, axes = plt.subplots(n_rows, 3, figsize=(16.5, 6*n_rows))
+axes = axes.flatten() if n_rows > 1 else [axes] if n_rows == 1 else []
+
+# Create scatter plots for all numeric variables
 for i, col in enumerate(numeric_cols):
-    if i < len(axes):
-        axes[i].scatter(df1fno[col], df1fno['price'], alpha=0.6)
-        axes[i].set_xlabel(col)
-        axes[i].set_ylabel('Price')
-        axes[i].set_title(f'Price vs {col}')
-        axes[i].grid(True, alpha=0.3)
+    axes[i].scatter(df1fno[col], df1fno['price'], alpha=0.1)
+    axes[i].set_xlabel(col)
+    axes[i].set_ylabel('Price')
+    axes[i].set_title(f'Price vs {col}')
+    axes[i].grid(True, alpha=0.1)
 
 # Hide empty subplots
 for i in range(len(numeric_cols), len(axes)):
