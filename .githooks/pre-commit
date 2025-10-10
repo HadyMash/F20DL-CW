@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+set -e
+
+# Get list of staged files before processing
+STAGED_FILES=$(git diff --cached --name-only)
+
+# format files with black and sort imports with isort
+black .
+isort .
+
+# run jupytext sync to update all notebooks
+jupytext --sync --pipe black *.ipynb
+jupytext --pipe 'isort - --treat-comment-as-code "# %%" --float-to-top' *.ipynb
+
+# re-stage only the files that were originally staged and may have been modified by jupytext
+for file in \"$STAGED_FILES\"; do
+    if [ -f "$file" ]; then
+        git add "$file"
+    fi
+done
+
