@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# format files with black and sort imports with isort
+black code
+isort code
+
+# run jupytext sync to update all notebooks
+jupytext --sync --pipe black code/*.ipynb
+jupytext --pipe 'isort - --treat-comment-as-code "# %%" --float-to-top' code/*.ipynb
