@@ -18,7 +18,7 @@ Because it can be hard to resolve conflicts in jupyter notebooks, we version con
 
 You can also use the cli to sync notebooks by running `jupytext --sync <file>`.
 
-If you use VS Code, you can use [Jupytext Sync](https://marketplace.visualstudio.com/items?itemName=caenrigen.jupytext-sync) to sync the notebook and python files. If you're using neovim, you can use [Molten](https://github.com/benlubas/molten-nvim) with [Jupytext.nvim](https://github.com/GCBallesteros/jupytext.nvim) (check [Molten](https://github.com/benlubas/molten-nvim) for configuration instructions). If you're using another editor, you may find a similar Jupytext extension
+If you use VS Code, you can use [Jupytext Sync](https://marketplace.visualstudio.com/items?itemName=caenrigen.jupytext-sync) to sync the notebook and python files (make sure you configure the extension's settings to sync properly). If you're using neovim, you can use [Molten](https://github.com/benlubas/molten-nvim) with [Jupytext.nvim](https://github.com/GCBallesteros/jupytext.nvim) (check [Molten](https://github.com/benlubas/molten-nvim) for configuration instructions). If you're using another editor, you may find a similar Jupytext extension.
 
 ### Git hooks
 
