@@ -22,7 +22,7 @@ If you use VS Code, you can use [Jupytext Sync](https://marketplace.visualstudio
 
 ### Git hooks
 
-You should also configure the git hooks by running `setup-hooks.sh`. This file will configure the hooks so whenever you commit, pull, or merge, the notebooks will be synced automatically and files will be formatted. This way your notebooks always stay synced.
+You should also configure the git hooks by running `setup-hooks.sh` (or `setup-hooks.ps1` on windows). This file will configure the hooks so whenever you commit, pull, or merge, the notebooks will be synced automatically and files will be formatted. This way your notebooks always stay synced.
 
 # How to make changes
 
