@@ -21,7 +21,7 @@ jupytext --sync --pipe black *.ipynb
 jupytext --pipe 'isort - --treat-comment-as-code "# %%" --float-to-top' *.ipynb
 
 # re-stage only the files that were originally staged and may have been modified by jupytext
-for file in \"$STAGED_FILES\"; do
+for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
         git add "$file"
     fi
