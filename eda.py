@@ -20,12 +20,11 @@
 import os
 
 import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-import scipy.stats as stats
 import numpy as np
+import pandas as pd
+import scipy.stats as stats
+import seaborn as sns
 import statsmodels.formula.api as smf
-
 
 plt.ion()
 
@@ -94,7 +93,7 @@ df_test = df.copy()
 # Filter down to patients with both ALSFRS_Total and ALSFRS_R_Total
 
 # %%
-df_test = df_test[df_test["ALSFRS_Total"].notna() & df_test["ALSFRS_R_Total"].notna() ]
+df_test = df_test[df_test["ALSFRS_Total"].notna() & df_test["ALSFRS_R_Total"].notna()]
 
 # %%
 df_test.describe()
@@ -161,9 +160,9 @@ for idx, row in df.iterrows():
 # %% [markdown]
 # Convert DOB to Age and remove missing both
 # %%
-print(df["Age"].isnull().sum()) 
+print(df["Age"].isnull().sum())
 df["Age"] = df["Age"].fillna(-df["Date_of_Birth"] / 365.25)
-print(df["Age"].isnull().sum())   
+print(df["Age"].isnull().sum())
 
 # %% [markdown]
 # Correlations to sex
@@ -177,17 +176,21 @@ df = df[df["Sex_numeric"].notna()]
 model = smf.logit("Sex_numeric ~ Age", data=df).fit()
 print(model.summary())
 # %% [markdown]
-# Flatten Age distribution 
+# Flatten Age distribution
 # %%
 df_sample_ALS0 = df.copy()
-df_sample_ALS0 = df_sample_ALS0[df_sample_ALS0["ALSFRS_Delta"] < 1] 
+df_sample_ALS0 = df_sample_ALS0[df_sample_ALS0["ALSFRS_Delta"] < 1]
 df_sample = df_sample_ALS0
 df_sample["Age"].plot(kind="hist", bins=20, title="Age Distribution")
 
 bins = list(range(30, 85, 5))
 labels = [f"{b}-{b+5}" for b in bins[:-1]]
 df["Age_bin"] = pd.cut(df["Age"], bins=bins, labels=labels, right=False)
-df_sample = df.groupby("Age_bin").apply(lambda x: x.sample(n=200, replace=True)).reset_index(drop=True)
+df_sample = (
+    df.groupby("Age_bin")
+    .apply(lambda x: x.sample(n=200, replace=True))
+    .reset_index(drop=True)
+)
 df_sample["Age"].plot(kind="hist", bins=10, title="Age Distribution")
 # %% [markdown]
 # Correlations to time to death ;ie Age of onset ,male vs female ,
@@ -198,9 +201,13 @@ df_sample["Age"].plot(kind="hist", bins=10, title="Age Distribution")
 print(df_DEATH["Death_Days"].mean())
 print(df_DEATH["Death_Days"].std())
 
-df_sample["Death_Days"] = np.where(df_sample["Death_Days"] >= 800, np.nan, df_sample["Death_Days"])
+df_sample["Death_Days"] = np.where(
+    df_sample["Death_Days"] >= 800, np.nan, df_sample["Death_Days"]
+)
 
-df_sample = df_sample[np.isfinite(df_sample["Death_Days"]) & np.isfinite(df_sample["Age"])]
+df_sample = df_sample[
+    np.isfinite(df_sample["Death_Days"]) & np.isfinite(df_sample["Age"])
+]
 
 xy = np.vstack([df_sample["Age"], df_sample["Death_Days"]])
 z = stats.gaussian_kde(xy)(xy)
@@ -211,10 +218,12 @@ plt.xlabel("Age at study entry")
 plt.title("Age vs Days to Death with Density Coloring")
 
 # %% [markdown]
-# Histogram of Age for survived patients or over 800 days 
+# Histogram of Age for survived patients or over 800 days
 # %%
 
-df_sample["Death_Days"] = np.where(df_sample["Death_Days"] >= 800, np.nan, df_sample["Death_Days"])
+df_sample["Death_Days"] = np.where(
+    df_sample["Death_Days"] >= 800, np.nan, df_sample["Death_Days"]
+)
 df_sample["Death_Days"].isnull().sum()
 df_survived = df_sample[df_sample["Death_Days"].isnull()]
 df_survived.info()
@@ -224,7 +233,9 @@ plt.show()
 # %% [markdown]
 # Inital ALSFRS score vs Age at study entry
 # %%
-df_sample = df_sample[np.isfinite(df_sample["ALSFRS_Total"]) & np.isfinite(df_sample["Age"])]
+df_sample = df_sample[
+    np.isfinite(df_sample["ALSFRS_Total"]) & np.isfinite(df_sample["Age"])
+]
 xy = np.vstack([df_sample["Age"], df_sample["ALSFRS_Total"]])
 z = stats.gaussian_kde(xy)(xy)
 plt.scatter(df_sample["Age"], df_sample["ALSFRS_Total"], c=z, s=20, cmap="Blues")
@@ -234,17 +245,25 @@ plt.xlabel("Age at study entry")
 plt.title("Age vs Initial ALSFRS Score with Density Coloring")
 
 # %% [markdown]
-# 3d graph of Age ,Initial ALSFRS score vs Days to Death -RUN IN NOTEBOOK 
+# 3d graph of Age ,Initial ALSFRS score vs Days to Death -RUN IN NOTEBOOK
 # %%
 df_sample = df.copy()
-df_sample["Death_Days"] = np.where(df_sample["Death_Days"] >= 800, np.nan, df_sample["Death_Days"])
+df_sample["Death_Days"] = np.where(
+    df_sample["Death_Days"] >= 800, np.nan, df_sample["Death_Days"]
+)
 
-fig = plt.figure(figsize=(10,10))
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter3D(df_sample["Age"], df_sample["ALSFRS_Total"], df_sample["Death_Days"], c=df_sample["Death_Days"], cmap='plasma')
-ax.set_xlabel('Age at study entry')
-ax.set_ylabel('Initial ALSFRS Score')
-ax.set_zlabel('Days to Death')
-ax.set_title('3D Scatter Plot of Age, Initial ALSFRS Score vs Days to Death')
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection="3d")
+ax.scatter3D(
+    df_sample["Age"],
+    df_sample["ALSFRS_Total"],
+    df_sample["Death_Days"],
+    c=df_sample["Death_Days"],
+    cmap="plasma",
+)
+ax.set_xlabel("Age at study entry")
+ax.set_ylabel("Initial ALSFRS Score")
+ax.set_zlabel("Days to Death")
+ax.set_title("3D Scatter Plot of Age, Initial ALSFRS Score vs Days to Death")
 plt.show()
 # %%
