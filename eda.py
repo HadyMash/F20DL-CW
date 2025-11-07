@@ -23,8 +23,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
-
-# import statsmodels.formula.api as smf
+import statsmodels.formula.api as smf
 
 # plt.ion()
 
@@ -275,4 +274,5 @@ ax.set_ylabel("Initial ALSFRS Score")
 ax.set_zlabel("Days to Death")
 ax.set_title("3D Scatter Plot of Age, Initial ALSFRS Score vs Days to Death")
 plt.show()
-# %%
+# %% [markdown]
+#
