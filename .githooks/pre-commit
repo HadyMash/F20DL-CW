@@ -13,12 +13,12 @@ set -e
 STAGED_FILES=$(git diff --cached --name-only)
 
 # format files with black and sort imports with isort
-black .
-isort .
+python -m black .
+python -m isort .
 
 # run jupytext sync to update all notebooks
-jupytext --sync --pipe black *.ipynb
-jupytext --pipe 'isort - --treat-comment-as-code "# %%" --float-to-top' *.ipynb
+python -m jupytext --sync --pipe black *.ipynb
+python -m jupytext --pipe 'isort - --treat-comment-as-code "# %%" --float-to-top' *.ipynb
 
 # re-stage only the files that were originally staged and may have been modified by jupytext
 for file in $STAGED_FILES; do
