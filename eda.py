@@ -16,7 +16,6 @@
 # # Exploratory Data Analysis on the datasets
 
 # %%
-# %matplotlib widget
 import os
 
 import matplotlib.pyplot as plt
@@ -24,9 +23,10 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
-import statsmodels.formula.api as smf
 
-plt.ion()
+# import statsmodels.formula.api as smf
+
+# plt.ion()
 
 # %%
 # check the dataset path exists
@@ -102,6 +102,13 @@ df_test.describe()
 df_test.info()
 
 # %% [markdown]
+# Scatter plot of ALSFRS_Total vs ALSFRS_R_Total
+
+# %%
+plt.figure(figsize=(15, 12))
+df_test.plot.scatter(x="ALSFRS_Total", y="ALSFRS_R_Total")
+
+# %% [markdown]
 # Convert by averaging the revised questions to normal Q10 score
 
 # %%
@@ -141,6 +148,8 @@ print(f"RMSE: {rmse}")
 print(f"Corr: {corr}")
 
 # %% [markdown]
+# # EDA
+#
 # Apply changes to main dataframe
 # %%
 for idx, row in df.iterrows():
