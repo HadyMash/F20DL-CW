@@ -17,6 +17,7 @@
 
 # %%
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,10 +26,11 @@ import scipy.stats as stats
 import seaborn as sns
 
 # %%
+DATASET_DIR = "2025_05_27_PROACT_ALL_FORMS"
 # Load the proact ALSFRS, Demographics and death files
-df_ALSFRS = pd.read_csv("2025_05_27_PROACT_ALL_FORMS/PROACT_ALSFRS.csv")
-df_DEMO = pd.read_csv("2025_05_27_PROACT_ALL_FORMS/PROACT_DEMOGRAPHICS.csv")
-df_DEATH = pd.read_csv("2025_05_27_PROACT_ALL_FORMS/PROACT_DEATHDATA.csv")
+df_ALSFRS = pd.read_csv(f"{DATASET_DIR}/PROACT_ALSFRS.csv")
+df_DEMO = pd.read_csv(f"{DATASET_DIR}/PROACT_DEMOGRAPHICS.csv")
+df_DEATH = pd.read_csv(f"{DATASET_DIR}/PROACT_DEATHDATA.csv")
 df_DEMO = df_DEMO.merge(df_DEATH, on="subject_id", how="left")
 
 # %% [markdown]
@@ -37,10 +39,9 @@ df_DEMO = df_DEMO.merge(df_DEATH, on="subject_id", how="left")
 # This notebook pre-processes the data such that it is in a usable format for the model training. This notebook:
 #
 # 1. Converts ALSFRS Revised scores to ALSFRS scores
-# 2. Interpolate missing data linearly (as done in [this paper](https://www.sciencedirect.com/science/article/pii/S2666521225000511))
-# 3. Normalizes ALSFRS scores (including converted)
-# 4. Convert DOB to Age
-# 5. Remove patients missing both age and DOB
+# 2. Normalizes the ALSFRS scores in another column
+# 3. Convert DOB to Age
+# 4. Remove patients missing both age and DOB
 #
 # ## ALSFRS Revised conversion
 #
@@ -80,45 +81,6 @@ print(df_ALSFRS["ALSFRS_Total"].isna().sum())
 
 # %%
 df_ALSFRS.describe()
-
-# %% [markdown]
-# ## ALSFRS Interpolation
-#
-# ### Delta
-# Firstly, how spaced out are entries? What's the range of the delta, and how many entries per patient?
-
-# %%
-print(
-    f"{df_ALSFRS['ALSFRS_Delta'].min()} to {df_ALSFRS['ALSFRS_Delta'].max()} (range of {df_ALSFRS['ALSFRS_Delta'].max() - df_ALSFRS['ALSFRS_Delta'].min()})"
-)
-
-# %%
-print(df_ALSFRS.groupby("subject_id").size().mean())
-
-# %% [markdown]
-# What's the average first entry delta?
-
-# %%
-print(df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].min().mean())
-
-# %% [markdown]
-# What's the average last entry delta?
-
-# %%
-print(df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].max().mean())
-
-# %% [markdown]
-# Check if any patients have less than 2 entries
-
-# %%
-print(df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].size().min())
-
-# %% [markdown]
-# Remove any patients with less than 2 entries
-
-# %%
-mask = df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].transform("size") >= 4
-df_ALSFRS = df_ALSFRS[mask]
 
 # %% [markdown]
 # Clamp ALSFRS scores between 0 and 40
@@ -163,5 +125,16 @@ print(df_DEMO["Age"].isnull().sum())
 
 # %%
 df_DEMO.describe()
+
+# %% [markdown]
+# # Save dataframes
+
+# %%
+# make a processed directory if not exists
+os.makedirs(f"{DATASET_DIR}/processed", exist_ok=True)
+
+# save the csvs
+df_ALSFRS.to_csv(f"{DATASET_DIR}/processed/ALSFRS.csv", index=False)
+df_DEMO.to_csv(f"{DATASET_DIR}/processed/DEMOGRAPHICS.csv", index=False)
 # %% [markdown]
 #
