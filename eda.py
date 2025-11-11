@@ -117,6 +117,11 @@ for idx, row in df_test.iterrows():
     r3 = row["R_3_Respiratory_Insufficiency"]
     avg = (r1 + r2 + r3) / 3  # normal avg
 
+    if np.isnan(avg):
+        continue
+
+    avg = round(avg)
+
     # subtract sum of r1-3 from R_Total
     total = row["ALSFRS_R_Total"]
     total -= r1 + r2 + r3
@@ -147,8 +152,6 @@ print(f"RMSE: {rmse}")
 print(f"Corr: {corr}")
 
 # %% [markdown]
-# # EDA
-#
 # Apply changes to main dataframe
 # %%
 for idx, row in df.iterrows():
@@ -158,6 +161,11 @@ for idx, row in df.iterrows():
         r3 = row["R_3_Respiratory_Insufficiency"]
         avg = (r1 + r2 + r3) / 3  # normal avg
 
+        if np.isnan(avg):
+            continue
+
+        avg = round(avg)
+
         # subtract sum of r1-3 from R_Total
         total = row["ALSFRS_R_Total"]
         total -= r1 + r2 + r3
@@ -165,8 +173,12 @@ for idx, row in df.iterrows():
         # add the average
         total += avg
         df.loc[idx, "ALSFRS_Total"] = total
+
 # %% [markdown]
+# # EDA
+#
 # Convert DOB to Age and remove missing both
+
 # %%
 print(df["Age"].isnull().sum())
 df["Age"] = df["Age"].fillna(-df["Date_of_Birth"] / 365.25)
@@ -174,6 +186,7 @@ print(df["Age"].isnull().sum())
 
 # %% [markdown]
 # Correlations to sex
+
 # %%
 model = smf.ols("Death_Days ~ C(Sex) + Age", data=df).fit()
 print(model.summary())
@@ -183,8 +196,10 @@ df["Sex_numeric"] = df["Sex"].map({"Female": 0, "Male": 1})
 df = df[df["Sex_numeric"].notna()]
 model = smf.logit("Sex_numeric ~ Age", data=df).fit()
 print(model.summary())
+
 # %% [markdown]
 # Flatten Age distribution
+
 # %%
 df_sample_ALS0 = df.copy()
 df_sample_ALS0 = df_sample_ALS0[df_sample_ALS0["ALSFRS_Delta"] < 1]
@@ -200,11 +215,10 @@ df_sample = (
     .reset_index(drop=True)
 )
 df_sample["Age"].plot(kind="hist", bins=10, title="Age Distribution")
+
 # %% [markdown]
 # Correlations to time to death ;ie Age of onset ,male vs female ,
 
-# %% markdown
-# Plot of Age at study entry vs Days to Death if dead
 # %%
 print(df_DEATH["Death_Days"].mean())
 print(df_DEATH["Death_Days"].std())
@@ -253,7 +267,7 @@ plt.xlabel("Age at study entry")
 plt.title("Age vs Initial ALSFRS Score with Density Coloring")
 
 # %% [markdown]
-# 3d graph of Age ,Initial ALSFRS score vs Days to Death -RUN IN NOTEBOOK
+# 3d graph of Age,, Initial ALSFRS score vs Days to Death
 # %%
 df_sample = df.copy()
 df_sample["Death_Days"] = np.where(
