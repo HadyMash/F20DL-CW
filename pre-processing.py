@@ -122,7 +122,7 @@ df_DEMO = df_DEMO[~(df_DEMO["Age"].isna() & df_DEMO["Date_of_Birth"].isna())]
 df_DEMO["Age"] = df_DEMO["Age"].fillna(-df_DEMO["Date_of_Birth"] / 365.25)
 
 # %%
-print(df_DEMO["Age"].isnull().sum())
+print(df_DEMO["Age"].isna().sum())
 
 # %%
 df_DEMO.describe()
