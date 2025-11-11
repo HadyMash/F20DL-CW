@@ -41,7 +41,8 @@ df_DEMO = df_DEMO.merge(df_DEATH, on="subject_id", how="left")
 # 2. Normalizes the ALSFRS scores in another column
 # 3. Convert DOB to Age
 # 4. Remove patients missing both age and DOB
-# 5. Linearly interpolates missing ALSFRS scores for each patient for time-step based models (this is saved to another csv)
+# 5. Consolidate Q5a and Q5b cutting columns into a single Q5_Cutting column with a gastrostomy boolean
+# 6. Linearly interpolates missing ALSFRS scores for each patient for time-step based models (this is saved to another csv)
 #
 # ## ALSFRS Revised conversion
 #
@@ -127,6 +128,40 @@ print(df_DEMO["Age"].isnull().sum())
 df_DEMO.describe()
 
 # %% [markdown]
+# ## Consolidate Q5 Cutting columns
+#
+# Consolidate Q5a_Cutting_without_Gastrostomy and Q5b_Cutting_with_Gastrostomy into a single Q5_Cutting column, and add a boolean gastrostomy column to indicate which was used.
+
+# %%
+# Create gastrostomy boolean column
+# If Q5b has a value, patient has gastrostomy; otherwise they don't
+df_ALSFRS["gastrostomy"] = df_ALSFRS["Q5b_Cutting_with_Gastrostomy"].notna()
+
+# Create consolidated Q5_Cutting column
+# Use Q5b if available (patient has gastrostomy), otherwise use Q5a
+df_ALSFRS["Q5_Cutting"] = df_ALSFRS["Q5b_Cutting_with_Gastrostomy"].fillna(
+    df_ALSFRS["Q5a_Cutting_without_Gastrostomy"]
+)
+
+# Drop the original Q5a and Q5b columns
+df_ALSFRS = df_ALSFRS.drop(
+    columns=["Q5a_Cutting_without_Gastrostomy", "Q5b_Cutting_with_Gastrostomy"]
+)
+
+print(f"Gastrostomy distribution:")
+print(df_ALSFRS["gastrostomy"].value_counts())
+print(f"\nQ5_Cutting missing values: {df_ALSFRS['Q5_Cutting'].isna().sum()}")
+
+# %%
+df_ALSFRS.head()
+
+# %%
+df_ALSFRS.describe()
+
+# %%
+df_ALSFRS.info()
+
+# %% [markdown]
 # # Save dataframes
 
 # %%
@@ -142,32 +177,17 @@ df_DEMO.to_csv(f"{DATASET_DIR}/processed/DEMOGRAPHICS.csv", index=False)
 # %% [markdown]
 # ## Temporal Data Modeling Approach
 #
-# For each patient and temporal feature (ALSFRS_Total), we create a vector to store values for all available time steps based on the patient's visit history:
-# - t0: Feature values at first visit
-# - t1: Values after one month
-# - t2: Values after two months
-# - ...and so on for as many months as the patient has data
-#
-# Each time step is filled using available data from the database. If multiple visits exist for the same time step, we use the last visit value. Then we use linear interpolation to fill in missing time steps between the first and last valid measurements.
-
-# %%
-# First, let's examine the structure of the ALSFRS data
-print("Columns in ALSFRS dataframe:")
-print(df_ALSFRS.columns.tolist())
-print("\nSample of data with subject_id, ALSFRS_Total, and ALSFRS_Delta:")
-print(df_ALSFRS[["subject_id", "ALSFRS_Total", "ALSFRS_Delta"]].head(20))
+# Linearly interpolate time-series data for each patient in 1 month (30 day timesteps). If multiple visits exist for the same timestep, the last visit value is used.
 
 
 # %%
-# Function to convert ALSFRS_Delta (days) to month timestep
 def delta_to_timestep(delta_days):
-    """Convert days to month timestep using rounding"""
+    """Convert days to month time-step using rounding"""
     if pd.isna(delta_days):
         return None
     return int(round(delta_days / 30.0))
 
 
-# Function to create interpolated time series for a single patient
 def create_patient_timeseries(patient_data):
     """
     Create a time series for a patient with linear interpolation.
@@ -183,18 +203,18 @@ def create_patient_timeseries(patient_data):
     Returns:
         tuple: (numpy array with interpolated ALSFRS_Total values, max_timestep)
     """
-    # Step 1: Add timestep column
+    # Step 1: Add time-step column
     patient_data = patient_data.copy()
     patient_data["timestep"] = patient_data["ALSFRS_Delta"].apply(delta_to_timestep)
 
-    # Remove rows with missing timestep or negative timestep
+    # Remove rows with missing time-step or negative time-step
     patient_data = patient_data[patient_data["timestep"].notna()]
     patient_data = patient_data[patient_data["timestep"] >= 0]
 
     if len(patient_data) == 0:
         return np.array([]), -1
 
-    # Step 2: Keep the latest entry for each timestep
+    # Step 2: Keep the latest entry for each time-step
     # Sort by ALSFRS_Delta to ensure we keep the latest measurement
     patient_data = patient_data.sort_values("ALSFRS_Delta")
     # Group by timestep and take the last (latest) entry
@@ -233,10 +253,10 @@ def create_patient_timeseries(patient_data):
     return timeseries, max_timestep
 
 
-# %%
+# %% [markdown]
 # Create interpolated time series for all patients
-print("Creating interpolated time series for all patients...")
 
+# %%
 # Get unique patient IDs
 patient_ids = df_ALSFRS["subject_id"].unique()
 print(f"Total number of patients: {len(patient_ids)}")
