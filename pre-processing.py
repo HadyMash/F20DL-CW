@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.18.1
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: dmml
 #     language: python
-#     name: python3
+#     name: dmml
 # ---
 
 # %% [markdown]
@@ -118,6 +118,13 @@ print(df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].size().min())
 
 # %%
 mask = df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].transform("size") >= 4
+df_ALSFRS = df_ALSFRS[mask]
+
+# %% [markdown]
+# Remove any patients with negative ALSFRS scores
+
+# %%
+mask = df_ALSFRS.groupby("subject_id")["ALSFRS_Total"].transform("min") >= 0
 df_ALSFRS = df_ALSFRS[mask]
 
 # %%
