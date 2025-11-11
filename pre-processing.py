@@ -121,11 +121,10 @@ mask = df_ALSFRS.groupby("subject_id")["ALSFRS_Delta"].transform("size") >= 4
 df_ALSFRS = df_ALSFRS[mask]
 
 # %% [markdown]
-# Remove any patients with negative ALSFRS scores
+# Clamp ALSFRS scores between 0 and 40
 
 # %%
-mask = df_ALSFRS.groupby("subject_id")["ALSFRS_Total"].transform("min") >= 0
-df_ALSFRS = df_ALSFRS[mask]
+df_ALSFRS["ALSFRS_Total"] = df_ALSFRS["ALSFRS_Total"].clip(lower=0, upper=40)
 
 # %%
 df_ALSFRS.describe()
