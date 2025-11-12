@@ -9,3 +9,4 @@ kagglehub
 kagglehub[pandas-datasets]
 black # for formatting
 isort # to sort imports
+statsmodels
