@@ -430,3 +430,12 @@ axes[1, 2].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
+
+# %% [markdown]
+# Save the cleaned datasets
+
+# %%
+os.makedirs("processed", exist_ok=True)
+
+df1f.to_csv("processed/usa_real_estate.csv", index=False)
+df2.to_csv("processed/zipcodes.csv", index=False)
