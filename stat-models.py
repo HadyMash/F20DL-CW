@@ -240,8 +240,8 @@ features = pd.DataFrame(
 # Plot bar graph
 plt.figure(figsize=(14, 8))
 top_features = features.head(15)
-colour = ["green"]
-plt.barh(range(len(top_features)), top_features["Coefficient"], color=colour)
+colors = ["green" if x > 0 else "red" for x in top_features["Coefficient"]]
+plt.barh(range(len(top_features)), top_features["Coefficient"], color=colors)
 plt.yticks(range(len(top_features)), top_features["Feature"])
 plt.xlabel("Coefficient Value")
 plt.title("Top 15 Feature Coefficients in Linear Regression Model")
@@ -256,7 +256,7 @@ plt.figure(figsize=(12, 5))
 
 # Training set figure
 plt.subplot(1, 2, 1)
-plt.scatter(y_train, y_pred_train, alpha=0.5)
+plt.scatter(y_train, y_pred_train, alpha=0.3, s=1)
 plt.xlabel("Actual Prices")
 plt.ylabel("Predicted Prices")
 plt.title("Training Set: Actual vs Predicted Prices")
@@ -264,7 +264,7 @@ plt.plot([y_train.min(), y_train.max()], [y_train.min(), y_train.max()], "r--")
 
 # Testing set figure
 plt.subplot(1, 2, 2)
-plt.scatter(y_test, y_pred_test, alpha=0.5)
+plt.scatter(y_test, y_pred_test, alpha=0.3, s=1)
 plt.xlabel("Actual Prices")
 plt.ylabel("Predicted Prices")
 plt.title("Testing Set: Actual vs Predicted Prices")
@@ -289,10 +289,11 @@ X_train_strat, X_test_strat, y_train_strat, y_test_strat = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=strat_bins
 )
 
-# Scale features
+# Scale data
 scaler_strat = StandardScaler()
 X_train_strat_scaled = scaler_strat.fit_transform(X_train_strat)
 X_test_strat_scaled = scaler_strat.transform(X_test_strat)
+
 
 # Train model with stratified data
 model_strat = LinearRegression()
@@ -303,8 +304,8 @@ model_strat.fit(X_train_strat_scaled, y_train_strat)
 # Evaluate
 
 # %%
-y_strat_pred_train = model_strat.predict(X_train_strat)
-y_strat_pred_test = model_strat.predict(X_test_strat)
+y_strat_pred_train = model_strat.predict(X_train_strat_scaled)
+y_strat_pred_test = model_strat.predict(X_test_strat_scaled)
 
 # metrics
 test_r2_strat = r2_score(y_test_strat, y_strat_pred_test)
@@ -384,7 +385,7 @@ axes[0].axhline(
     y=test_r2_cv.mean(),
     color="red",
     linestyle="--",
-    label=f"Mean Val: {test_r2_cv.mean():.4f}",
+    label=f"Mean Val: {test_r2_cv.mean():.0f}",
 )
 axes[0].fill_between(
     range(1, k + 1),
@@ -407,15 +408,15 @@ axes[1].plot(
     range(1, k + 1), test_rmse_cv, "s-", label="Validation", linewidth=2, markersize=8
 )
 axes[1].axhline(
-    y=train_rmse_cv.mean(),
+    y=test_rmse_cv.mean(),
     color="red",
     linestyle="--",
-    label=f"Mean Val: ${train_rmse_cv.mean():,.0f}",
+    label=f"Mean Val: ${test_rmse_cv.mean():,.0f}",
 )
 axes[1].fill_between(
     range(1, k + 1),
-    train_rmse_cv.mean() - train_rmse_cv.std(),
-    train_rmse_cv.mean() + train_rmse_cv.std(),
+    test_rmse_cv.mean() - test_rmse_cv.std(),
+    test_rmse_cv.mean() + test_rmse_cv.std(),
     alpha=0.2,
     color="red",
 )
@@ -637,7 +638,7 @@ if not grid_search_model_loaded:
         .reset_index()
     )
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
     # Plot mean scores for each K value
     axes[0].errorbar(
@@ -845,9 +846,33 @@ plt.show()
 # %%
 final_results = {
     "Model": ["Linear Regression", "KNN", "Decision Tree"],
-    "Testing R2": [test_R2, test_R2_knn_best, test_R2_dt_best],
-    "Testing MAE": [test_MAE, test_MAE_knn_best, test_MAE_dt_best],
-    "Testing RMSE": [test_RMSE, test_RMSE_knn_best, test_RMSE_dt_best],
+    "Testing R2": [
+        test_R2,
+        test_r2_strat,
+        test_r2_cv.mean(),
+        test_R2_knn,
+        test_R2_knn_best,
+        test_R2_dt,
+        test_R2_dt_best,
+    ],
+    "Testing MAE": [
+        test_MAE,
+        test_MAE_strat,
+        test_mae_cv.mean(),
+        test_MAE_knn,
+        test_MAE_knn_best,
+        test_MAE_dt,
+        test_MAE_dt_best,
+    ],
+    "Testing RMSE": [
+        test_RMSE,
+        test_RMSE_strat,
+        test_rmse_cv.mean(),
+        test_RMSE_knn,
+        test_RMSE_knn_best,
+        test_RMSE_dt,
+        test_RMSE_dt_best,
+    ],
 }
 final_results_df = pd.DataFrame(final_results)
 print("Comparison of Models:")
@@ -990,11 +1015,11 @@ X_test_strat_scaled_rent = scaler_strat.transform(X_test_strat_rent)
 
 # Train model with stratified data
 model_strat = LinearRegression()
-model_strat.fit(X_train_strat, y_train_strat)
+model_strat.fit(X_train_strat_scaled_rent, y_train_strat_rent)
 
 # Make predictions
-y_strat_pred_train_rent = model_strat.predict(X_train_strat)
-y_strat_pred_test_rent = model_strat.predict(X_test_strat)
+y_strat_pred_train_rent = model_strat.predict(X_train_strat_scaled_rent)
+y_strat_pred_test_rent = model_strat.predict(X_test_strat_scaled_rent)
 
 # metrics
 test_r2_strat_rent = r2_score(y_test_strat_rent, y_strat_pred_test_rent)
@@ -1767,4 +1792,4 @@ ax2.set_title(
 ax2.grid(True, alpha=0.3, axis="x")
 
 plt.tight_layout()
-plt.show()
+plt.show()  # re
