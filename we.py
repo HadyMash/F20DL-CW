@@ -6,8 +6,8 @@ import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-dataset1_path = r"C:/Users/user/Desktop/F20DL-CW/processed/usa_real_estate.csv"
-dataset2_path = r"C:/Users/user/Desktop/F20DL-CW/processed/zipcodes.csv"
+dp1 = processed/*.csv
+dp2 = processed/*.csv
 
 row_index_a = 0
 row_index_b = 0
@@ -69,12 +69,12 @@ def vector_to_text(title, vec, columns):
     return "\n".join(lines) + "\n\n"
 
 print("loading 1 dataset")
-dfA_full, dfA = load_numeric_df(dataset1_path)
+dfA_full, dfA = load_numeric_df(dp1)
 modelA, scalerA = train_autoencoder(dfA.values)
 origA = dfA.values[row_index_a]
 outA = reconstruct(modelA, scalerA, origA) if use_reconstruction_for_qr else origA
 print("loading 2 dataset")
-dfB_full, dfB = load_numeric_df(dataset2_path)
+dfB_full, dfB = load_numeric_df(dp2)
 dfB = fix_dataset2(dfB)
 modelB, scalerB = train_autoencoder(dfB.values)
 origB = dfB.values[row_index_b]
