@@ -463,11 +463,6 @@ plt.show()
 # %% [markdown]
 # Prepare features
 
-# %%
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-
 # %% [markdown]
 # Fit model
 
@@ -504,10 +499,6 @@ print(f"Training RMSE: {train_RMSE_knn:.2f}, Testing RMSE: {test_RMSE_knn:.2f}")
 # Load model if already saved
 
 # %%
-# Cell to test without running full gridsearch
-best_knn_model = knn_model
-
-# %%
 grid_search_model_loaded = False
 
 model_path = "models/best_knn_model.pkl"
@@ -533,7 +524,7 @@ else:
 # %%
 # Define parameter grid
 param_grid = {
-    "n_neighbors": [3, 5, 7, 9, 11, 15, 20, 25, 30],
+    "n_neighbors": [5, 9],
     "weights": ["uniform", "distance"],
     "metric": ["euclidean", "manhattan"],
 }
@@ -970,13 +961,18 @@ X_train_rent, X_test_rent, y_train_rent, y_test_rent = train_test_split(
     X_rent, y_rent, test_size=0.2, random_state=42
 )
 
+# Normalize data
+scaler_rent = StandardScaler()
+X_train_rent_scaled = scaler_rent.fit_transform(X_train_rent)
+X_test_rent_scaled = scaler_rent.transform(X_test_rent)
+
 
 # %% [markdown]
 # Fit model
 
 # %%
 model_lr_rent = LinearRegression()
-model_lr_rent.fit(X_train_rent, y_train_rent)
+model_lr_rent.fit(X_train_rent_scaled, y_train_rent)
 
 
 # %% [markdown]
@@ -984,8 +980,8 @@ model_lr_rent.fit(X_train_rent, y_train_rent)
 
 # %%
 # Make predictions
-y_pred_train_rent = model_lr_rent.predict(X_train_rent)
-y_pred_test_rent = model_lr_rent.predict(X_test_rent)
+y_pred_train_rent = model_lr_rent.predict(X_train_rent_scaled)
+y_pred_test_rent = model_lr_rent.predict(X_test_rent_scaled)
 
 # Calculate metrics
 train_R2_rent = r2_score(y_train_rent, y_pred_train_rent)
@@ -1007,12 +1003,12 @@ print(f"Training RMSE: {train_RMSE_rent:.2f}, Testing RMSE: {test_RMSE_rent:.2f}
 # %%
 # Create bins
 bins = 10
-strat_bins = pd.qcut(y, q=bins, labels=False, duplicates="drop")
+strat_bins_rent = pd.qcut(y_rent, q=bins, labels=False, duplicates="drop")
 
 # Preform stratified split
 X_train_strat_rent, X_test_strat_rent, y_train_strat_rent, y_test_strat_rent = (
     train_test_split(
-        X_rent, y_rent, test_size=0.2, random_state=42, stratify=strat_bins
+        X_rent, y_rent, test_size=0.2, random_state=42, stratify=strat_bins_rent
     )
 )
 
@@ -1115,8 +1111,8 @@ knn_model_rent = KNeighborsRegressor()
 knn_model_rent.fit(X_train_scaled_rent, y_train_rent)
 
 # Make predictions
-y_pred_test_rent = knn_model_rent.predict(X_test_rent)
-y_pred_train_rent = knn_model_rent.predict(X_train_rent)
+y_pred_test_rent = knn_model_rent.predict(X_test_scaled_rent)
+y_pred_train_rent = knn_model_rent.predict(X_train_scaled_rent)
 
 # Calculate metrics
 train_R2_knn_rent = r2_score(y_train_rent, y_pred_train_rent)
@@ -1144,8 +1140,8 @@ print(
 # %%
 grid_search_model_loaded_rent = False
 
-model_path_rent = "models/best_knn_model__rent.pkl"
-scaler_path_rent = "models/scaler__rent.pkl"
+model_path_rent = "models/best_knn_model_rent.pkl"
+scaler_path_rent = "models/scaler_rent.pkl"
 
 if os.path.exists(model_path_rent) and os.path.exists(scaler_path_rent):
     # Load model and scaler
@@ -1169,7 +1165,7 @@ else:
 # %%
 # Define parameter grid
 param_grid = {
-    "n_neighbors": [3, 5, 7, 9, 11, 15, 20, 25, 30],
+    "n_neighbors": [5, 9],
     "weights": ["uniform", "distance"],
     "metric": ["euclidean", "manhattan"],
 }
@@ -1285,8 +1281,8 @@ dt_grid_search_rent.fit(X_train_scaled_rent, y_train_rent)
 best_dt_model_rent = dt_grid_search_rent.best_estimator_
 
 # Make predictions
-y_pred_train_dt_best_rent = best_dt_model_rent.predict(X_train_rent)
-y_pred_test_dt_best_rent = best_dt_model_rent.predict(X_test_rent)
+y_pred_train_dt_best_rent = best_dt_model_rent.predict(X_train_scaled_rent)
+y_pred_test_dt_best_rent = best_dt_model_rent.predict(X_test_scaled_rent)
 
 # Calculate metrics
 train_R2_dt_best_rent = r2_score(y_train_rent, y_pred_train_dt_best_rent)
@@ -1694,8 +1690,6 @@ print("=" * 70)
 print("FEATURE IMPORTANCE ANALYSIS: MEDIAN RENT CONTRIBUTION")
 print("=" * 70)
 
-# Ensure feature list and models from this notebook are used:
-# feature_col_rent, model_lr_rent, best_dt_model_rent are expected to exist.
 
 # Linear Regression coefficients
 feature_importance_lr_rent = (
