@@ -11,7 +11,7 @@ dp2 = processed/*.csv
 
 row_index_a = 0
 row_index_b = 0
-use_reconstruction_for_qr = True
+for_qr = True
 EPOCHS = 20
 BATCH_SIZE = 32
 RANDOM_STATE = 42
@@ -72,13 +72,13 @@ print("loading 1 dataset")
 dfA_full, dfA = load_numeric_df(dp1)
 modelA, scalerA = train_autoencoder(dfA.values)
 origA = dfA.values[row_index_a]
-outA = reconstruct(modelA, scalerA, origA) if use_reconstruction_for_qr else origA
+outA = reconstruct(modelA, scalerA, origA) if for_qr else origA
 print("loading 2 dataset")
 dfB_full, dfB = load_numeric_df(dp2)
 dfB = fix_dataset2(dfB)
 modelB, scalerB = train_autoencoder(dfB.values)
 origB = dfB.values[row_index_b]
-outB = reconstruct(modelB, scalerB, origB) if use_reconstruction_for_qr else origB
+outB = reconstruct(modelB, scalerB, origB) if for_qr else origB
 textA = vector_to_text("DATASET 1", outA, dfA.columns)
 textB = vector_to_text("DATASET 2", outB, dfB.columns)
 final_text = textA + textB
