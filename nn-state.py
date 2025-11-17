@@ -12,9 +12,6 @@
 #     name: dmml
 # ---
 
-# %%
-import matplotlib.pyplot as plt
-
 # %% [markdown]
 # # Neural Networks
 #
@@ -23,6 +20,10 @@ import matplotlib.pyplot as plt
 # import matplotlib.pyplot as plt
 # import numpy as np
 # %%
+import os
+from datetime import datetime
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 from sklearn.metrics import mean_squared_error
@@ -96,6 +97,35 @@ df_merged.head()
 # Select feature columns. Basically everything but exclude the price related information:
 
 # %%
+df_merged.info()
+
+# %%
+df_merged.describe()
+
+# %%
+df_merged.head()
+
+# %% [markdown]
+# One-hot encode the state field to include geographic information
+
+# %%
+# Check state distribution
+print("State distribution:")
+print(df_merged["state"].value_counts())
+print(f"\nTotal unique states: {df_merged['state'].nunique()}")
+
+# Create one-hot encoded state columns
+state_dummies = pd.get_dummies(df_merged["state"], prefix="state", drop_first=False)
+print(f"\nOne-hot encoded state columns created: {state_dummies.shape[1]} columns")
+print(
+    f"State columns: {list(state_dummies.columns[:10])}{'...' if len(state_dummies.columns) > 10 else ''}"
+)
+
+# Add one-hot encoded states to the merged dataframe
+df_merged = pd.concat([df_merged, state_dummies], axis=1)
+print(f"\nUpdated dataframe shape: {df_merged.shape}")
+
+# %%
 
 feature_columns = [
     # House characteristics
@@ -126,13 +156,20 @@ feature_columns = [
     "Median Commute Time",
 ]
 
+# Add one-hot encoded state columns to features
+state_columns = [col for col in df_merged.columns if col.startswith("state_")]
+feature_columns.extend(state_columns)
+
 X = df_merged[feature_columns]
 y = df_merged["price"]
 
 print(f"Features shape: {X.shape}")
 print(f"Target shape: {y.shape}")
-print(f"\nFeatures being used:")
-for i, col in enumerate(feature_columns, 1):
+print(f"\nNumeric features: {len(feature_columns) - len(state_columns)}")
+print(f"State features (one-hot encoded): {len(state_columns)}")
+print(f"Total features: {len(feature_columns)}")
+print(f"\nFirst 10 features:")
+for i, col in enumerate(feature_columns[:10], 1):
     print(f"{i}. {col}")
 
 # %% [markdown]
@@ -180,6 +217,66 @@ y_val_scaled = out_scalar.transform(y_val.values.reshape(-1, 1))
 
 # %% [markdown]
 # Define all model architectures to compare
+
+
+# %%
+def create_model(architecture, input_dim):
+    """
+    Create a neural network model with the specified architecture.
+
+    Args:
+        architecture: List of layer sizes (excluding input, including output)
+        input_dim: Number of input features
+
+    Returns:
+        Compiled Keras model
+    """
+    model = keras.Sequential()
+    model.add(layers.Input(shape=(input_dim,)))
+
+    # Add hidden layers
+    for i, units in enumerate(architecture[:-1]):  # All layers except the last
+        model.add(
+            layers.Dense(
+                units,
+                activation="swish",
+                kernel_initializer="he_normal",
+                kernel_regularizer=keras.regularizers.l2(0.001),
+            )
+        )
+        # Add dropout for regularization (skip for very small layers)
+        if units >= 16:
+            dropout_rate = 0.2 if i == 0 else 0.15
+            model.add(layers.Dropout(dropout_rate))
+
+    # Output layer
+    model.add(layers.Dense(architecture[-1], activation="linear"))
+
+    # Compile the model
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.0005, clipvalue=1.0),
+        loss="huber",
+        metrics=["mae"],
+    )
+
+    return model
+
+
+# Define all architectures to test
+architectures = {
+    "original": [64, 32, 16, 1],
+    "deep": [256, 128, 64, 32, 16, 1],
+    "simple_256_64": [256, 64, 1],
+    "simple_128": [128, 1],
+    "simple_64": [64, 1],
+    "three_layer": [32, 16, 8, 1],
+    "deep_128": [128, 64, 1],
+    "double_32": [32, 32, 1],
+}
+
+print(f"Will train and compare {len(architectures)} different architectures:")
+for name, arch in architectures.items():
+    print(f"  {name}: {' -> '.join(map(str, arch))}")
 
 
 # %%
@@ -283,7 +380,7 @@ for activation in ["relu", "elu", "leaky_relu", "selu", "swish"]:
         y_train,
         validation_data=(X_val, y_val),
         epochs=100,
-        batch_size=2048,
+        batch_size=32_768,
         verbose=0,
         callbacks=[early_stopping],
     )
@@ -310,70 +407,8 @@ print("=" * 60)
 print(f"\nBest activation: {results_df.index[0].upper()}")
 print(f"MAE: ${results_df.iloc[0]['test_mae']:,.2f}")
 
-
 # %% [markdown]
 # Check GPU availability
-
-
-# %%
-def create_model(architecture, input_dim):
-    """
-    Create a neural network model with the specified architecture.
-
-    Args:
-        architecture: List of layer sizes (excluding input, including output)
-        input_dim: Number of input features
-
-    Returns:
-        Compiled Keras model
-    """
-    model = keras.Sequential()
-    model.add(layers.Input(shape=(input_dim,)))
-
-    # Add hidden layers
-    for i, units in enumerate(architecture[:-1]):  # All layers except the last
-        model.add(
-            layers.Dense(
-                units,
-                activation="elu",
-                kernel_initializer="he_normal",
-                kernel_regularizer=keras.regularizers.l2(0.001),
-            )
-        )
-        # Add dropout for regularization (skip for very small layers)
-        if units >= 16:
-            dropout_rate = 0.2 if i == 0 else 0.15
-            model.add(layers.Dropout(dropout_rate))
-
-    # Output layer
-    model.add(layers.Dense(architecture[-1], activation="linear"))
-
-    # Compile the model
-    model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.0005, clipvalue=1.0),
-        loss="huber",
-        metrics=["mae"],
-    )
-
-    return model
-
-
-# Define all architectures to test
-architectures = {
-    "original": [64, 32, 16, 1],
-    "deep": [256, 128, 64, 32, 16, 1],
-    "simple_256_64": [256, 64, 1],
-    "simple_128": [128, 1],
-    "simple_64": [64, 1],
-    "three_layer": [32, 16, 8, 1],
-    "deep_128": [128, 64, 1],
-    "double_32": [32, 32, 1],
-}
-
-print(f"Will train and compare {len(architectures)} different architectures:")
-for name, arch in architectures.items():
-    print(f"  {name}: {' -> '.join(map(str, arch))}")
-
 
 # %%
 print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
@@ -382,8 +417,6 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 # Train all models and save results
 
 # %%
-import os
-from datetime import datetime
 
 # Create directory for saving models
 os.makedirs("models/nn", exist_ok=True)
@@ -425,7 +458,7 @@ for arch_name, architecture in architectures.items():
         y_train,
         validation_data=(X_val, y_val),
         epochs=300,
-        batch_size=32_768,
+        batch_size=32_786,
         verbose=1,
         callbacks=[checkpoint_callback, early_stopping],
     )

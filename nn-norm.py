@@ -12,9 +12,6 @@
 #     name: dmml
 # ---
 
-# %%
-import matplotlib.pyplot as plt
-
 # %% [markdown]
 # # Neural Networks
 #
@@ -23,6 +20,10 @@ import matplotlib.pyplot as plt
 # import matplotlib.pyplot as plt
 # import numpy as np
 # %%
+import os
+from datetime import datetime
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 from sklearn.metrics import mean_squared_error
@@ -249,7 +250,7 @@ activation_functions = ["relu", "elu", "leaky_relu", "selu", "swish"]
 print("Testing activation functions with architecture: 128 -> 64 -> 1\n")
 for act in activation_functions:
     model = create_model_with_activation(
-        test_architecture, X_train.shape[1], activation=act
+        test_architecture, X_train_scaled.shape[1], activation=act
     )
     print(f"\n{act.upper()} Model:")
     print(f"  Total parameters: {model.count_params():,}")
@@ -271,7 +272,7 @@ for activation in ["relu", "elu", "leaky_relu", "selu", "swish"]:
     print(f"\nTraining with {activation.upper()} activation...")
 
     model = create_model_with_activation(
-        test_arch, X_train.shape[1], activation=activation
+        test_arch, X_train_scaled.shape[1], activation=activation
     )
 
     early_stopping = keras.callbacks.EarlyStopping(
@@ -279,16 +280,16 @@ for activation in ["relu", "elu", "leaky_relu", "selu", "swish"]:
     )
 
     history = model.fit(
-        X_train,
-        y_train,
-        validation_data=(X_val, y_val),
+        X_train_scaled,
+        y_train_scaled,
+        validation_data=(X_val_scaled, y_val_scaled),
         epochs=100,
         batch_size=2048,
         verbose=0,
         callbacks=[early_stopping],
     )
 
-    test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
+    test_loss, test_mae = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
 
     activation_results[activation] = {
         "test_mae": test_mae,
@@ -382,8 +383,6 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 # Train all models and save results
 
 # %%
-import os
-from datetime import datetime
 
 # Create directory for saving models
 os.makedirs("models/nn", exist_ok=True)
@@ -398,7 +397,7 @@ for arch_name, architecture in architectures.items():
     print(f"{'='*60}\n")
 
     # Create model
-    model = create_model(architecture, X_train.shape[1])
+    model = create_model(architecture, X_train_scaled.shape[1])
 
     # Display model summary
     print(f"\n{arch_name} Model Summary:")
@@ -421,9 +420,9 @@ for arch_name, architecture in architectures.items():
     # Train model
     start_time = datetime.now()
     history = model.fit(
-        X_train,
-        y_train,
-        validation_data=(X_val, y_val),
+        X_train_scaled,
+        y_train_scaled,
+        validation_data=(X_val_scaled, y_val_scaled),
         epochs=300,
         batch_size=32_768,
         verbose=1,
@@ -432,7 +431,7 @@ for arch_name, architecture in architectures.items():
     training_time = (datetime.now() - start_time).total_seconds()
 
     # Evaluate on test set
-    test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
+    test_loss, test_mae = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
 
     # Store results
     results[arch_name] = {
@@ -593,9 +592,9 @@ best_model = keras.models.load_model(results[best_model_name]["model_path"])
 
 # Test on sample properties
 sample_properties = X_test.sample(10, random_state=42)
-# sample_properties_scaled = in_scalar.transform(sample_properties)
-predicted_prices = best_model.predict(sample_properties, verbose=0)
-# predicted_prices = out_scalar.inverse_transform(predicted_prices)
+sample_properties_scaled = in_scalar.transform(sample_properties)
+predicted_prices = best_model.predict(sample_properties_scaled, verbose=0)
+predicted_prices = out_scalar.inverse_transform(predicted_prices)
 
 print(f"Predictions using best model: {best_model_name}")
 print(
