@@ -632,8 +632,8 @@ if not grid_search_model_loaded:
     cv_results_df = pd.DataFrame(grid_search.cv_results_)
 
     # Group by n_neighbors and weights, then calculate mean test score
-    mean_scores = (
-        cv_results_df.groupby(["param_n_neighbors", "param_weights"])["mean_test_score"]
+    kmean_scores = (
+        cv_results_df.groupby(["param_n_neighbors"])["mean_test_score"]
         .agg(["mean", "std", "max"])
         .reset_index()
     )
@@ -642,9 +642,9 @@ if not grid_search_model_loaded:
 
     # Plot mean scores for each K value
     axes[0].errorbar(
-        mean_scores["param_n_neighbors"],
-        mean_scores["mean"],
-        yerr=mean_scores["std"],
+        kmean_scores["param_n_neighbors"],
+        kmean_scores["mean"],
+        yerr=kmean_scores["std"],
         marker="o",
         capsize=5,
         linewidth=2,
