@@ -259,7 +259,7 @@ plt.subplot(1, 2, 1)
 plt.scatter(y_train, y_pred_train, alpha=0.3, s=1)
 plt.xlabel("Actual Prices")
 plt.ylabel("Predicted Prices")
-plt.title("Training Set: Actual vs Predicted Prices")
+plt.title(f"Training Set: Actual vs Predicted Prices\nR² = {train_R2:.4f}")
 plt.plot([y_train.min(), y_train.max()], [y_train.min(), y_train.max()], "r--")
 
 # Testing set figure
@@ -267,7 +267,7 @@ plt.subplot(1, 2, 2)
 plt.scatter(y_test, y_pred_test, alpha=0.3, s=1)
 plt.xlabel("Actual Prices")
 plt.ylabel("Predicted Prices")
-plt.title("Testing Set: Actual vs Predicted Prices")
+plt.title(f"Testing Set: Actual vs Predicted Prices\nR² = {test_R2:.4f}")
 plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "r--")
 
 plt.tight_layout()
@@ -289,7 +289,7 @@ X_train_strat, X_test_strat, y_train_strat, y_test_strat = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=strat_bins
 )
 
-# Scale data
+# normalise data
 scaler_strat = StandardScaler()
 X_train_strat_scaled = scaler_strat.fit_transform(X_train_strat)
 X_test_strat_scaled = scaler_strat.transform(X_test_strat)
@@ -845,7 +845,15 @@ plt.show()
 
 # %%
 final_results = {
-    "Model": ["Linear Regression", "KNN", "Decision Tree"],
+    "Model": [
+        "Linear Regression",
+        "Linear Regression Stratified",
+        "Linear Regression CV",
+        "KNN (k=5)",
+        "KNN Best",
+        "Decision Tree",
+        "Decision Tree Best",
+    ],
     "Testing R2": [
         test_R2,
         test_r2_strat,
@@ -1008,7 +1016,7 @@ X_train_strat_rent, X_test_strat_rent, y_train_strat_rent, y_test_strat_rent = (
     )
 )
 
-# Scale features
+# normalise features
 scaler_strat = StandardScaler()
 X_train_strat_scaled_rent = scaler_strat.fit_transform(X_train_strat_rent)
 X_test_strat_scaled_rent = scaler_strat.transform(X_test_strat_rent)
