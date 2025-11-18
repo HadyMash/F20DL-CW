@@ -524,7 +524,7 @@ else:
 # %%
 # Define parameter grid
 param_grid = {
-    "n_neighbors": [5, 9],
+    "n_neighbors": [3, 5, 7, 9, 11, 15, 20, 25, 30],
     "weights": ["uniform", "distance"],
     "metric": ["euclidean", "manhattan"],
 }
@@ -1165,7 +1165,7 @@ else:
 # %%
 # Define parameter grid
 param_grid = {
-    "n_neighbors": [5, 9],
+    "n_neighbors": [3, 5, 7, 9, 11, 15, 20, 25, 30],
     "weights": ["uniform", "distance"],
     "metric": ["euclidean", "manhattan"],
 }
