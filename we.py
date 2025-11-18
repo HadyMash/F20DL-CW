@@ -6,8 +6,8 @@ import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-dp1 = processed/*.csv
-dp2 = processed/*.csv
+dp1 = processed/use_real_estate.csv
+dp2 = processed/zipcodes.csv
 
 row_index_a = 0
 row_index_b = 0
