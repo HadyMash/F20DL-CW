@@ -346,7 +346,7 @@ activation_functions = ["relu", "elu", "leaky_relu", "selu", "swish"]
 print("Testing activation functions with architecture: 128 -> 64 -> 1\n")
 for act in activation_functions:
     model = create_model_with_activation(
-        test_architecture, X_train.shape[1], activation=act
+        test_architecture, X_train_scaled.shape[1], activation=act
     )
     print(f"\n{act.upper()} Model:")
     print(f"  Total parameters: {model.count_params():,}")
@@ -368,7 +368,7 @@ for activation in ["relu", "elu", "leaky_relu", "selu", "swish"]:
     print(f"\nTraining with {activation.upper()} activation...")
 
     model = create_model_with_activation(
-        test_arch, X_train.shape[1], activation=activation
+        test_arch, X_train_scaled.shape[1], activation=activation
     )
 
     early_stopping = keras.callbacks.EarlyStopping(
@@ -376,16 +376,16 @@ for activation in ["relu", "elu", "leaky_relu", "selu", "swish"]:
     )
 
     history = model.fit(
-        X_train,
-        y_train,
-        validation_data=(X_val, y_val),
+        X_train_scaled,
+        y_train_scaled,
+        validation_data=(X_val_scaled, y_val_scaled),
         epochs=100,
         batch_size=32_768,
         verbose=0,
         callbacks=[early_stopping],
     )
 
-    test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
+    test_loss, test_mae = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
 
     activation_results[activation] = {
         "test_mae": test_mae,
@@ -431,7 +431,7 @@ for arch_name, architecture in architectures.items():
     print(f"{'='*60}\n")
 
     # Create model
-    model = create_model(architecture, X_train.shape[1])
+    model = create_model(architecture, X_train_scaled.shape[1])
 
     # Display model summary
     print(f"\n{arch_name} Model Summary:")
@@ -448,16 +448,16 @@ for arch_name, architecture in architectures.items():
     )
 
     early_stopping = keras.callbacks.EarlyStopping(
-        monitor="val_loss", patience=10, restore_best_weights=True, verbose=1
+        monitor="val_loss", patience=30, restore_best_weights=True, verbose=1
     )
 
     # Train model
     start_time = datetime.now()
     history = model.fit(
-        X_train,
-        y_train,
-        validation_data=(X_val, y_val),
-        epochs=300,
+        X_train_scaled,
+        y_train_scaled,
+        validation_data=(X_val_scaled, y_val_scaled),
+        epochs=500,
         batch_size=32_786,
         verbose=1,
         callbacks=[checkpoint_callback, early_stopping],
@@ -465,7 +465,7 @@ for arch_name, architecture in architectures.items():
     training_time = (datetime.now() - start_time).total_seconds()
 
     # Evaluate on test set
-    test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
+    test_loss, test_mae = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
 
     # Store results
     results[arch_name] = {
@@ -548,11 +548,13 @@ for idx, (name, data) in enumerate(results.items()):
     axes[idx].legend()
     axes[idx].grid(True, alpha=0.3)
 
-    # Add final test MAE as text
+    # Add final test MAE as text (unnormalized)
+    # The test_mae from results is normalized, so we need to unnormalize it
+    test_mae_unnormalized = data["test_mae"] * out_scalar.scale_[0]
     axes[idx].text(
         0.02,
         0.98,
-        f"Test MAE: {data['test_mae']:.4f}",
+        f"Test MAE: ${test_mae_unnormalized:,.2f}",
         transform=axes[idx].transAxes,
         verticalalignment="top",
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
@@ -575,11 +577,14 @@ print("Training history plot saved to: models/nn/training_comparison.png")
 # Create bar plots for comparison
 fig, axes = plt.subplots(2, 2, figsize=(16, 10))
 
+# Unnormalize Test MAE for display
+test_mae_unnormalized = comparison_df["Test MAE"] * out_scalar.scale_[0]
+
 # Test MAE comparison
-axes[0, 0].bar(range(len(comparison_df)), comparison_df["Test MAE"], color="steelblue")
+axes[0, 0].bar(range(len(comparison_df)), test_mae_unnormalized, color="steelblue")
 axes[0, 0].set_xticks(range(len(comparison_df)))
 axes[0, 0].set_xticklabels(comparison_df.index, rotation=45, ha="right")
-axes[0, 0].set_ylabel("Test MAE")
+axes[0, 0].set_ylabel("Test MAE ($)")
 axes[0, 0].set_title("Test MAE by Model", fontweight="bold")
 axes[0, 0].grid(True, alpha=0.3, axis="y")
 
@@ -626,9 +631,9 @@ best_model = keras.models.load_model(results[best_model_name]["model_path"])
 
 # Test on sample properties
 sample_properties = X_test.sample(10, random_state=42)
-# sample_properties_scaled = in_scalar.transform(sample_properties)
-predicted_prices = best_model.predict(sample_properties, verbose=0)
-# predicted_prices = out_scalar.inverse_transform(predicted_prices)
+sample_properties_scaled = in_scalar.transform(sample_properties)
+predicted_prices = best_model.predict(sample_properties_scaled, verbose=0)
+predicted_prices = out_scalar.inverse_transform(predicted_prices)
 
 print(f"Predictions using best model: {best_model_name}")
 print(

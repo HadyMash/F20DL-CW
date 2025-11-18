@@ -21,6 +21,7 @@
 # import numpy as np
 # %%
 import os
+import time
 from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -414,7 +415,7 @@ for arch_name, architecture in architectures.items():
     )
 
     early_stopping = keras.callbacks.EarlyStopping(
-        monitor="val_loss", patience=10, restore_best_weights=True, verbose=1
+        monitor="val_loss", patience=30, restore_best_weights=True, verbose=1
     )
 
     # Train model
@@ -423,7 +424,7 @@ for arch_name, architecture in architectures.items():
         X_train_scaled,
         y_train_scaled,
         validation_data=(X_val_scaled, y_val_scaled),
-        epochs=300,
+        epochs=500,
         batch_size=32_768,
         verbose=1,
         callbacks=[checkpoint_callback, early_stopping],
@@ -514,11 +515,12 @@ for idx, (name, data) in enumerate(results.items()):
     axes[idx].legend()
     axes[idx].grid(True, alpha=0.3)
 
-    # Add final test MAE as text
+    # Add final test MAE as text (convert back to original scale)
+    mae_original_scale = data["test_mae"] * out_scalar.scale_[0]
     axes[idx].text(
         0.02,
         0.98,
-        f"Test MAE: {data['test_mae']:.4f}",
+        f"Test MAE: ${mae_original_scale:,.2f}",
         transform=axes[idx].transAxes,
         verticalalignment="top",
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
