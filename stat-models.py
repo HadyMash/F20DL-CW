@@ -37,13 +37,8 @@ import seaborn as sns
 from kagglehub import KaggleDatasetAdapter
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import (
-    GridSearchCV,
-    KFold,
-    cross_val_score,
-    cross_validate,
-    train_test_split,
-)
+from sklearn.model_selection import (GridSearchCV, KFold, cross_val_score,
+                                     cross_validate, train_test_split)
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
