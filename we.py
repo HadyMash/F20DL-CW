@@ -21,7 +21,7 @@ def load_numeric_df(path):
     df_num = df.select_dtypes(include=[np.number]).copy()
     return df, df_num
 #droping unnecessary info
-def fix_dataset2(df_num):
+def fix2(df_num):
     drop_cols = [
         "median_sale_price", "median_list_price", "median_ppsf",
         "median_list_ppsf", "price", "date", "city", "city_full"
@@ -54,7 +54,7 @@ def train_autoencoder(X):
         verbose=2
     )
     return model, scaler
-def reconstruct(model, scaler, row):
+def recon(model, scaler, row):
     r_scaled = scaler.transform(row.reshape(1, -1))
     r_rec_scaled = model.predict(r_scaled)
     return scaler.inverse_transform(r_rec_scaled)[0]
@@ -71,19 +71,18 @@ print("loading dataset 1")
 dfA_full, dfA = load_numeric_df(dp1)
 modelA, scalerA = train_autoencoder(dfA.values)
 origA = dfA.values[row_index_a]
-outA = reconstruct(modelA, scalerA, origA) if for_qr else origA
+outA = recon(modelA, scalerA, origA) if for_qr else origA
 print("loading 2 dataset 2")
 dfB_full, dfB = load_numeric_df(dp2)
-dfB = fix_dataset2(dfB)
+dfB = fix2(dfB)
 modelB, scalerB = train_autoencoder(dfB.values)
 origB = dfB.values[row_index_b]
-outB = reconstruct(modelB, scalerB, origB) if for_qr else origB
+outB = recon(modelB, scalerB, origB) if for_qr else origB
 textA = vector_to_text("DATASET 1", outA, dfA.columns)
 textB = vector_to_text("DATASET 2", outB, dfB.columns)
 final_text = textA + textB
 qr_path = "qr_combined1.png"
 qr = qrcode.make(final_text)
 qr.save(qr_path)
-
 print("\nsaved", qr_path)
 
