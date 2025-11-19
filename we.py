@@ -7,10 +7,10 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
-dp1 = r"C:/Users/user/Desktop/F20DL-CW/processed/usa_real_estate.csv"
-dp2 = r"C:/Users/user/Desktop/F20DL-CW/processed/zipcodes.csv"
+dp1 = r"processed/usa_real_estate.csv"
+dp2 = r"processed/zipcodes.csv"
 
-QR_SIZE = 64 #can be increased but it gets slower
+QR_SIZE = 64 #can be increased but gets slower
 MAX_SAMPLES = 10000
 EPOCHS = 20
 BATCH_SIZE = 32
@@ -55,7 +55,7 @@ df2_grouped = df2_clean.groupby("zipcode").mean().reset_index()
 #merging
 merged = pd.merge(df1_clean, df2_grouped, how="left", left_on="zip_code", right_on="zipcode")
 merged = merged.iloc[:MAX_SAMPLES].copy()
-PRICE_COL = "price"  # from dataset1
+PRICE_COL = "price" 
 merged_num = merged.select_dtypes(include=[np.number]).copy()
 merged_num["price_target"] = merged_num[PRICE_COL]
 #preparing features
@@ -64,7 +64,7 @@ y = merged_num["price_target"].values
 scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
 #convert to qrcode
-print("Generating QR codes...")
+print("generating qr")
 cols = X.columns.tolist()
 rows = X_scaled
 imgs = np.zeros((len(rows), QR_SIZE, QR_SIZE, 1), dtype=np.float32)
@@ -72,7 +72,7 @@ for i, row in enumerate(rows):
     text = row_to_text(row, cols)
     img = make_qr(text)
     imgs[i, :, :, 0] = img
-print("QR generation complete.")
+print("qr complete")
 X_train, X_test, y_train, y_test = train_test_split(
     imgs, y, test_size=0.2, random_state=RANDOM_STATE
 )
