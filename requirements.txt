@@ -12,3 +12,4 @@ isort # to sort imports
 statsmodels
 tensorflow
 keras
+qrcode
