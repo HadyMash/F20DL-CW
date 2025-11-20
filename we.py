@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import qrcode
 import tensorflow as tf
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
@@ -132,7 +133,6 @@ plt.xlabel("AP")  # actual
 plt.ylabel("PP")  # predicted
 plt.title("CNN PP vs AP")
 plt.show()
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 mse = mean_squared_error(y_test, y_pred)
 mae = mean_absolute_error(y_test, y_pred)
