@@ -21,6 +21,7 @@
 # import numpy as np
 # %%
 import os
+import time
 from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -256,11 +257,11 @@ def create_model(architecture, input_dim):
     # Output layer
     model.add(layers.Dense(architecture[-1], activation="linear"))
 
-    # Compile the model
+    # Compile the model with MSE loss
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.0005, clipvalue=1.0),
-        loss="huber",
-        metrics=["mae"],
+        loss="mean_squared_error",
+        metrics=["mae", "root_mean_squared_error"],
     )
 
     return model
@@ -342,11 +343,11 @@ def create_model_with_activation(architecture, input_dim, activation="relu"):
     # Output layer (always linear for regression)
     model.add(layers.Dense(architecture[-1], activation="linear"))
 
-    # Compile
+    # Compile with MSE loss
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.0005, clipvalue=1.0),
-        loss="huber",
-        metrics=["mae"],
+        loss="mean_squared_error",
+        metrics=["mae", "root_mean_squared_error"],
     )
 
     return model
@@ -398,7 +399,9 @@ for activation in ["relu", "elu", "leaky_relu", "selu", "swish"]:
         callbacks=[early_stopping],
     )
 
-    test_loss, test_mae = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
+    test_loss, test_mae, test_rmse = model.evaluate(
+        X_test_scaled, y_test_scaled, verbose=0
+    )
 
     # Unnormalize MAE for display
     test_mae_unnormalized = test_mae * out_scalar.scale_[0]
@@ -437,7 +440,7 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 # %%
 
 # Create directory for saving models
-os.makedirs("models/nn", exist_ok=True)
+os.makedirs("models/nn-mse", exist_ok=True)
 
 # Store results for comparison
 results = {}
@@ -456,7 +459,7 @@ for arch_name, architecture in architectures.items():
     model.summary()
 
     # Setup callbacks
-    model_path = f"models/nn/{arch_name}_model.keras"
+    model_path = f"models/nn-mse/{arch_name}_model.keras"
     checkpoint_callback = keras.callbacks.ModelCheckpoint(
         filepath=model_path,
         monitor="val_loss",
@@ -475,7 +478,7 @@ for arch_name, architecture in architectures.items():
         X_train_scaled,
         y_train_scaled,
         validation_data=(X_val_scaled, y_val_scaled),
-        epochs=800,
+        epochs=1000,
         batch_size=32_786,
         verbose=1,
         callbacks=[checkpoint_callback, early_stopping],
@@ -483,7 +486,9 @@ for arch_name, architecture in architectures.items():
     training_time = (datetime.now() - start_time).total_seconds()
 
     # Evaluate on test set
-    test_loss, test_mae = model.evaluate(X_test_scaled, y_test_scaled, verbose=0)
+    test_loss, test_mae, test_rmse = model.evaluate(
+        X_test_scaled, y_test_scaled, verbose=0
+    )
 
     # Store results
     results[arch_name] = {
@@ -497,7 +502,7 @@ for arch_name, architecture in architectures.items():
     }
 
     print(f"\n{arch_name} Results:")
-    print(f"  Test Loss (Huber): {test_loss:.4f}")
+    print(f"  Test Loss (MSE): {test_loss:.4f}")
     print(f"  Test MAE: {test_mae:.4f}")
     print(f"  Training time: {training_time:.1f}s")
     print(f"  Total parameters: {model.count_params():,}")
@@ -562,7 +567,7 @@ for idx, (name, data) in enumerate(results.items()):
         fontweight="bold",
     )
     axes[idx].set_xlabel("Epoch")
-    axes[idx].set_ylabel("Loss (Huber)")
+    axes[idx].set_ylabel("Loss (MSE)")
     axes[idx].legend()
     axes[idx].grid(True, alpha=0.3)
 
@@ -583,10 +588,10 @@ for idx in range(num_models, len(axes)):
     axes[idx].axis("off")
 
 plt.tight_layout()
-plt.savefig("models/nn/training_comparison.png", dpi=150, bbox_inches="tight")
+plt.savefig("models/nn-mse/training_comparison.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-print("Training history plot saved to: models/nn/training_comparison.png")
+print("Training history plot saved to: models/nn-mse/training_comparison.png")
 
 # %% [markdown]
 # Compare metrics across models
@@ -610,7 +615,7 @@ axes[0, 0].grid(True, alpha=0.3, axis="y")
 axes[0, 1].bar(range(len(comparison_df)), comparison_df["Test Loss"], color="coral")
 axes[0, 1].set_xticks(range(len(comparison_df)))
 axes[0, 1].set_xticklabels(comparison_df.index, rotation=45, ha="right")
-axes[0, 1].set_ylabel("Test Loss (Huber)")
+axes[0, 1].set_ylabel("Test Loss (MSE)")
 axes[0, 1].set_title("Test Loss by Model", fontweight="bold")
 axes[0, 1].grid(True, alpha=0.3, axis="y")
 
@@ -635,10 +640,10 @@ axes[1, 1].set_title("Model Size (Parameters) by Model", fontweight="bold")
 axes[1, 1].grid(True, alpha=0.3, axis="y")
 
 plt.tight_layout()
-plt.savefig("models/nn/metrics_comparison.png", dpi=150, bbox_inches="tight")
+plt.savefig("models/nn-mse/metrics_comparison.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-print("Metrics comparison plot saved to: models/nn/metrics_comparison.png")
+print("Metrics comparison plot saved to: models/nn-mse/metrics_comparison.png")
 
 # %% [markdown]
 # Test best model on sample properties

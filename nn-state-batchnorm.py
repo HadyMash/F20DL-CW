@@ -223,6 +223,7 @@ y_val_scaled = out_scalar.transform(y_val.values.reshape(-1, 1))
 def create_model(architecture, input_dim):
     """
     Create a neural network model with the specified architecture.
+    Uses Swish activation and batch normalization.
 
     Args:
         architecture: List of layer sizes (excluding input, including output)
@@ -244,10 +245,10 @@ def create_model(architecture, input_dim):
                 kernel_regularizer=keras.regularizers.l2(0.001),
             )
         )
-        # # Add batch normalization before activation
-        # model.add(layers.BatchNormalization())
-        # Add activation
-        model.add(layers.Activation("selu"))
+        # Add batch normalization before activation
+        model.add(layers.BatchNormalization())
+        # Add Swish activation
+        model.add(layers.Activation("swish"))
         # Add dropout for regularization (skip for very small layers)
         if units >= 16:
             dropout_rate = 0.2 if i == 0 else 0.15
@@ -437,7 +438,7 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 # %%
 
 # Create directory for saving models
-os.makedirs("models/nn", exist_ok=True)
+os.makedirs("models/nn-swish-batchnorm", exist_ok=True)
 
 # Store results for comparison
 results = {}
@@ -456,7 +457,7 @@ for arch_name, architecture in architectures.items():
     model.summary()
 
     # Setup callbacks
-    model_path = f"models/nn/{arch_name}_model.keras"
+    model_path = f"models/nn-swish-batchnorm/{arch_name}_model.keras"
     checkpoint_callback = keras.callbacks.ModelCheckpoint(
         filepath=model_path,
         monitor="val_loss",
@@ -583,10 +584,14 @@ for idx in range(num_models, len(axes)):
     axes[idx].axis("off")
 
 plt.tight_layout()
-plt.savefig("models/nn/training_comparison.png", dpi=150, bbox_inches="tight")
+plt.savefig(
+    "models/nn-swish-batchnorm/training_comparison.png", dpi=150, bbox_inches="tight"
+)
 plt.show()
 
-print("Training history plot saved to: models/nn/training_comparison.png")
+print(
+    "Training history plot saved to: models/nn-swish-batchnorm/training_comparison.png"
+)
 
 # %% [markdown]
 # Compare metrics across models
@@ -635,10 +640,14 @@ axes[1, 1].set_title("Model Size (Parameters) by Model", fontweight="bold")
 axes[1, 1].grid(True, alpha=0.3, axis="y")
 
 plt.tight_layout()
-plt.savefig("models/nn/metrics_comparison.png", dpi=150, bbox_inches="tight")
+plt.savefig(
+    "models/nn-swish-batchnorm/metrics_comparison.png", dpi=150, bbox_inches="tight"
+)
 plt.show()
 
-print("Metrics comparison plot saved to: models/nn/metrics_comparison.png")
+print(
+    "Metrics comparison plot saved to: models/nn-swish-batchnorm/metrics_comparison.png"
+)
 
 # %% [markdown]
 # Test best model on sample properties
