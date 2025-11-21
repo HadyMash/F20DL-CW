@@ -34,7 +34,7 @@ Make a feature branch, make the changes, then create a PR into main
 
 # Overview of files
 
-- EDA.py/ipynb: Exploratory Data Analysis of the dataset. This script contains the EDA and also some preprocessing steps and it saves the output, you must run this first if you wish to use any of the other notebooks.
+- eda.py/ipynb: Exploratory Data Analysis of the dataset. This script contains the EDA and also some preprocessing steps and it saves the output, you must run this first if you wish to use any of the other notebooks.
 - stat-models.py/ipynb: Implements the baseline statistical models.
 - nn-\*.py/ipynb: Implements the different neural network models. The latest one is nn-state-batchnorm. state refers to using one-hot encoded states as part of the input features. the nn-mse uses mse instead of huber, but it performs worse.
 - we.py is a python script that implements the novel qr code approach described in the report.
